@@ -1,25 +1,18 @@
-import { CalculateMetadataFunction, Composition } from "remotion";
+import { Composition } from "remotion";
+import { PremiumMotionBackground } from "./PremiumMotionBackground";
 
-type Props = {};
-
-const calculateMetadata: CalculateMetadataFunction<Props> = () => {
-  return {};
-};
+const FPS = 30;
+const DURATION_IN_SECONDS = 10;
 
 export const MyComposition = () => {
   return (
     <Composition
-      id="MyComp"
-      component={MyComponent}
-      durationInFrames={60}
-      fps={30}
-      width={1280}
-      height={720}
-      calculateMetadata={calculateMetadata}
+      id="PremiumMotionBackground"
+      component={PremiumMotionBackground}
+      durationInFrames={FPS * DURATION_IN_SECONDS}
+      fps={FPS}
+      width={1920}
+      height={1080}
     />
   );
-};
-
-export const MyComponent: React.FC<Props> = () => {
-  return null;
 };
