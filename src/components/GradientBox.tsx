@@ -2,15 +2,59 @@ import { Easing, interpolate, useCurrentFrame } from "remotion";
 
 export type GradientVariant = "redOrange" | "green" | "pinkPurple" | "blue";
 
-const GRADIENTS: Record<GradientVariant, string> = {
-  redOrange:
-    "radial-gradient(ellipse 60% 50% at 50% 15%, rgba(20,0,0,0.85), transparent 60%), linear-gradient(160deg, #ff6a3d 0%, #e8291c 55%, #c41e0f 100%)",
-  green:
-    "radial-gradient(ellipse 55% 60% at 50% 55%, rgba(120,255,170,0.9), transparent 65%), linear-gradient(160deg, #0b3d20 0%, #06301a 100%)",
-  pinkPurple:
-    "radial-gradient(ellipse 50% 45% at 50% 50%, rgba(10,0,20,0.9), transparent 60%), linear-gradient(160deg, #ff6fd8 0%, #c13cff 50%, #7a1fcf 100%)",
-  blue:
-    "radial-gradient(ellipse 70% 18% at 50% 55%, rgba(140,190,255,0.95), transparent 70%), linear-gradient(160deg, #0a1a4a 0%, #050d2c 100%)",
+type GradientSpec = {
+  ellipseSize: string;
+  baseX: number;
+  baseY: number;
+  glowColor: string;
+  fadeStop: string;
+  linear: string;
+};
+
+const GRADIENT_SPECS: Record<GradientVariant, GradientSpec> = {
+  redOrange: {
+    ellipseSize: "60% 50%",
+    baseX: 50,
+    baseY: 15,
+    glowColor: "rgba(20,0,0,0.85)",
+    fadeStop: "60%",
+    linear: "linear-gradient(160deg, #ff6a3d 0%, #e8291c 55%, #c41e0f 100%)",
+  },
+  green: {
+    ellipseSize: "55% 60%",
+    baseX: 50,
+    baseY: 55,
+    glowColor: "rgba(120,255,170,0.9)",
+    fadeStop: "65%",
+    linear: "linear-gradient(160deg, #0b3d20 0%, #06301a 100%)",
+  },
+  pinkPurple: {
+    ellipseSize: "50% 45%",
+    baseX: 50,
+    baseY: 50,
+    glowColor: "rgba(10,0,20,0.9)",
+    fadeStop: "60%",
+    linear: "linear-gradient(160deg, #ff6fd8 0%, #c13cff 50%, #7a1fcf 100%)",
+  },
+  blue: {
+    ellipseSize: "70% 18%",
+    baseX: 50,
+    baseY: 55,
+    glowColor: "rgba(140,190,255,0.95)",
+    fadeStop: "70%",
+    linear: "linear-gradient(160deg, #0a1a4a 0%, #050d2c 100%)",
+  },
+};
+
+const buildBackground = (
+  variant: GradientVariant,
+  driftX: number,
+  driftY: number,
+) => {
+  const spec = GRADIENT_SPECS[variant];
+  const x = spec.baseX + driftX;
+  const y = spec.baseY + driftY;
+  return `radial-gradient(ellipse ${spec.ellipseSize} at ${x}% ${y}%, ${spec.glowColor}, transparent ${spec.fadeStop}), ${spec.linear}`;
 };
 
 type Props = {
@@ -19,6 +63,7 @@ type Props = {
   startFrame: number;
   durationInFrames: number;
   size: number;
+  idlePhase: number;
 };
 
 export const GradientBox: React.FC<Props> = ({
@@ -27,6 +72,7 @@ export const GradientBox: React.FC<Props> = ({
   startFrame,
   durationInFrames,
   size,
+  idlePhase,
 }) => {
   const frame = useCurrentFrame();
   const localFrame = frame - startFrame;
@@ -38,8 +84,19 @@ export const GradientBox: React.FC<Props> = ({
   });
 
   const opacity = eased;
-  const translateY = interpolate(eased, [0, 1], [56, 0]);
+  const entranceY = interpolate(eased, [0, 1], [56, 0]);
   const blurPx = interpolate(eased, [0, 1], [24, 0]);
+
+  // Gentle idle motion once the entrance has (mostly) settled, offset per box
+  // so the 4 boxes never move in perfect unison.
+  const floatPeriod = 150 + idlePhase * 14;
+  const floatAngle = ((frame + idlePhase * 37) / floatPeriod) * Math.PI * 2;
+  const floatY = Math.sin(floatAngle) * 9 * eased;
+
+  const glowPeriod = 210 + idlePhase * 21;
+  const glowAngle = ((frame + idlePhase * 53) / glowPeriod) * Math.PI * 2;
+  const driftX = Math.sin(glowAngle) * 7;
+  const driftY = Math.cos(glowAngle * 0.8) * 6;
 
   return (
     <div
@@ -47,9 +104,9 @@ export const GradientBox: React.FC<Props> = ({
         width: size,
         height: size,
         borderRadius: size * 0.22,
-        background: GRADIENTS[variant],
+        background: buildBackground(variant, driftX, driftY),
         opacity,
-        transform: `translateY(${translateY}px)`,
+        transform: `translateY(${entranceY + floatY}px)`,
         filter: `blur(${blurPx}px)`,
         boxShadow:
           "inset 0 1px 1px rgba(255,255,255,0.25), inset 0 -20px 40px rgba(0,0,0,0.25), 0 20px 40px rgba(0,0,0,0.35)",

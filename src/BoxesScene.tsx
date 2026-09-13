@@ -33,6 +33,7 @@ export const BoxesScene: React.FC = () => {
           startFrame={index * STAGGER}
           durationInFrames={BOX_DURATION}
           size={BOX_SIZE}
+          idlePhase={index}
         />
       ))}
     </AbsoluteFill>

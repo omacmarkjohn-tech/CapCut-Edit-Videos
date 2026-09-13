@@ -6,7 +6,7 @@ export const MyComposition = () => {
     <Composition
       id="AppleBoxes"
       component={BoxesScene}
-      durationInFrames={150}
+      durationInFrames={240}
       fps={30}
       width={1920}
       height={1080}
